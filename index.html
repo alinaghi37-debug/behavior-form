@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فرم وب تحلیل رفتار</title>
+<style>
+  body{font-family:tahoma, sans-serif;direction:rtl;margin:0;padding:0;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f7f7f7}
+  .card{background:#fff;padding:32px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.08);text-align:center;max-width:520px;width:92%}
+  h1{font-size:22px;margin:0 0 8px}
+  p{margin:0 0 16px;opacity:.8}
+  button{padding:14px 28px;border:none;border-radius:10px;font-size:16px;cursor:pointer}
+  button:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>فرم وب تحلیل رفتار</h1>
+    <p>برای ثبت داده‌ها روی دکمه زیر کلیک کنید.</p>
+    <form id="behaviorForm">
+      <button type="submit">ارسال</button>
+    </form>
+    <div id="status" aria-live="polite" style="margin-top:12px;font-size:14px;"></div>
+  </div>
+
+<script>
+  // زمان شروع باز شدن صفحه
+  let startTime = new Date();
+
+  // ===== تنظیمات اتصال =====
+  // اگر وبهوک Power Automate ساختی، لینک را اینجا بگذار:
+  // نمونه: const ENDPOINT = "https://prod-00.westeurope.logic.azure.com:443/workflows/.../triggers/manual/paths/invoke?api-version=2016-10-01&sp=...&sv=1.0&sig=...";
+  const ENDPOINT = ""; // TODO: اینجا URL وبهوک را قرار بده
+
+  document.getElementById('behaviorForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const endTime = new Date();
+    const responseTime = (endTime - startTime) / 1000; // ثانیه
+
+    const payload = {
+      responseTime: responseTime,
+      userAgent: navigator.userAgent,
+      tzOffsetMin: new Date().getTimezoneOffset(),
+      ts: new Date().toISOString()
+    };
+
+    const status = document.getElementById('status');
+    status.textContent = "در حال ارسال...";
+
+    if(!ENDPOINT){
+      status.textContent = "لطفاً ENDPOINT را در کد تنظیم کن و صفحه را رفرش کن.";
+      return;
+    }
+
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      if(res.ok){
+        status.textContent = "ثبت شد ✅  (زمان پاسخ: " + responseTime.toFixed(2) + " ثانیه)";
+      } else {
+        status.textContent = "خطا در ارسال (" + res.status + ")";
+      }
+    } catch (err){
+      status.textContent = "خطا در اتصال: " + err;
+    }
+  });
+</script>
+</body>
+</html>
